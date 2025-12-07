@@ -18,7 +18,7 @@ dotfiles/
 Clone the repository:
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/dotfiles ~/dotfiles
+git clone https://github.com/l-kedzielawski/dotfiles ~/dotfiles
 cd ~/dotfiles
 ````
 
