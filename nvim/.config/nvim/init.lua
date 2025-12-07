@@ -177,7 +177,9 @@ end)
 local map = vim.keymap.set
 local opts = { noremap = true, silent = true }
 
--- Window navigation
+-- Mouse: whenever you select text with the mouse and release, yank to system clipboard
+map("v", "<LeftRelease>", '"+y', { silent = true })
+
 map('n', '<C-h>', '<C-w>h', opts)
 map('n', '<C-j>', '<C-w>j', opts)
 map('n', '<C-k>', '<C-w>k', opts)
