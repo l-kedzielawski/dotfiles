@@ -16,7 +16,6 @@ vim.opt.breakindent = true
 vim.opt.breakindentopt = "shift:3" 
 vim.opt.linebreak = true
 
-
 -- Search
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
@@ -42,6 +41,7 @@ if fn.empty(fn.glob(install_path)) > 0 then
     "https://github.com/wbthomason/packer.nvim", install_path })
   vim.cmd([[packadd packer.nvim]])
 end
+
 vim.cmd([[packadd packer.nvim]])
 
 -- Auto recompile when saving this file
@@ -57,10 +57,10 @@ vim.cmd([[
 -- =========================
 require("packer").startup(function(use)
   use "wbthomason/packer.nvim"
-
+  
   -- Icons
   use "nvim-tree/nvim-web-devicons"
-
+  
   -- Statusline
   use {
     "nvim-lualine/lualine.nvim",
@@ -68,7 +68,7 @@ require("packer").startup(function(use)
       require("lualine").setup()
     end
   }
-
+  
   -- File Explorer
   use {
     "nvim-tree/nvim-tree.lua",
@@ -77,28 +77,112 @@ require("packer").startup(function(use)
       require("nvim-tree").setup()
     end
   }
-
+  
   -- Telescope (fuzzy finder)
   use "nvim-lua/plenary.nvim"
   use {
     "nvim-telescope/telescope.nvim",
     config = function()
-      require("telescope").setup({})
+      require("telescope").setup({
+        defaults = {
+          file_ignore_patterns = { "node_modules", ".git/" },
+          mappings = {
+            i = {
+              ["<C-j>"] = require('telescope.actions').move_selection_next,
+              ["<C-k>"] = require('telescope.actions').move_selection_previous,
+            }
+          }
+        }
+      })
     end
   }
-
+  
   -- Treesitter (syntax & indent)
   use {
     "nvim-treesitter/nvim-treesitter",
     run = ":TSUpdate",
     config = function()
       require("nvim-treesitter.configs").setup {
+        ensure_installed = { "python", "javascript", "typescript", "lua", "markdown", "html", "css" },
         highlight = { enable = true },
         indent = { enable = true },
       }
     end
   }
+  
+ -- LSP Configuration (Native Neovim 0.11+ method)
+use {
+  "neovim/nvim-lspconfig",
+  config = function()
+    -- Setup keybindings when LSP attaches
+    vim.api.nvim_create_autocmd('LspAttach', {
+      group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+      callback = function(ev)
+        local opts = { buffer = ev.buf }
+        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+        vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+        vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
+        vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
+      end,
+    })
 
+    -- Python LSP
+    vim.lsp.config('pyright', {
+      cmd = { 'pyright-langserver', '--stdio' },
+      filetypes = { 'python' },
+      root_markers = { 'pyproject.toml', 'setup.py', 'requirements.txt', '.git' },
+      settings = {
+        python = {
+          analysis = {
+            autoSearchPaths = true,
+            useLibraryCodeForTypes = true,
+          }
+        }
+      }
+    })
+    vim.lsp.enable('pyright')
+
+    -- TypeScript/JavaScript LSP
+    vim.lsp.config('ts_ls', {
+      cmd = { 'typescript-language-server', '--stdio' },
+      filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+      root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json', '.git' },
+    })
+    vim.lsp.enable('ts_ls')
+
+    -- Lua LSP
+    vim.lsp.config('lua_ls', {
+      cmd = { 'lua-language-server' },
+      filetypes = { 'lua' },
+      root_markers = { '.luarc.json', '.luarc.jsonc', '.git' },
+      settings = {
+        Lua = {
+          diagnostics = {
+            globals = { 'vim' }
+          },
+          workspace = {
+            library = vim.api.nvim_get_runtime_file("", true),
+            checkThirdParty = false,
+          },
+        }
+      }
+    })
+    vim.lsp.enable('lua_ls')
+  end
+}
+  -- Autocompletion
+  use "hrsh7th/nvim-cmp"
+  use "hrsh7th/cmp-nvim-lsp"
+  use "hrsh7th/cmp-buffer"
+  use "hrsh7th/cmp-path"
+  use "L3MON4D3/LuaSnip"
+  use "saadparwaiz1/cmp_luasnip"
+  
   -- Colorscheme
   use {
     "folke/tokyonight.nvim",
@@ -106,7 +190,7 @@ require("packer").startup(function(use)
       vim.cmd("colorscheme tokyonight")
     end
   }
-
+  
   -- Markdown Preview (browser)
   use({
     "iamcco/markdown-preview.nvim",
@@ -118,7 +202,7 @@ require("packer").startup(function(use)
       vim.g.mkdp_filetypes = { "markdown" }
     end,
   })
-
+  
   -- Mind map inside Neovim
   use({
     "phaazon/mind.nvim",
@@ -128,7 +212,7 @@ require("packer").startup(function(use)
       require("mind").setup()
     end,
   })
-
+  
   -- Integrated Terminal (ToggleTerm)
   use({
     "akinsho/toggleterm.nvim",
@@ -150,14 +234,14 @@ require("packer").startup(function(use)
       })
     end,
   })
-
+  
   -- Zen writing mode (left + right margins)
   use({
     "folke/zen-mode.nvim",
     config = function()
       require("zen-mode").setup({
         window = {
-          width = 0.6,  -- 60% of the screen; rest are side margins
+          width = 0.6,
           options = {
             number = false,
             relativenumber = false,
@@ -167,9 +251,61 @@ require("packer").startup(function(use)
       })
     end,
   })
+  
+  -- Auto-pairs (auto close brackets, quotes, etc.)
+  use {
+    "windwp/nvim-autopairs",
+    config = function()
+      require("nvim-autopairs").setup{}
+    end
+  }
+  
+  -- Comment plugin (gcc to comment line)
+  use {
+    "numToStr/Comment.nvim",
+    config = function()
+      require('Comment').setup()
+    end
+  }
 end)
 
+-- =========================
+-- Autocompletion Setup
+-- =========================
+local cmp = require('cmp')
+local luasnip = require('luasnip')
 
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<CR>'] = cmp.mapping.confirm({ select = true }),
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+  }),
+  sources = {
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' },
+    { name = 'buffer' },
+    { name = 'path' },
+  },
+})
 
 -- =========================
 -- Keymaps
@@ -180,6 +316,7 @@ local opts = { noremap = true, silent = true }
 -- Mouse: whenever you select text with the mouse and release, yank to system clipboard
 map("v", "<LeftRelease>", '"+y', { silent = true })
 
+-- Window navigation
 map('n', '<C-h>', '<C-w>h', opts)
 map('n', '<C-j>', '<C-w>j', opts)
 map('n', '<C-k>', '<C-w>k', opts)
@@ -195,11 +332,19 @@ map('n', '<A-Right>', ':vertical resize +2<CR>', opts)
 map("n", "<leader>e", ":NvimTreeToggle<CR>", opts)
 map("n", "<leader>r", ":NvimTreeFindFile<CR>", opts)
 
--- Telescope
+-- Telescope - FAST FILE NAVIGATION
+map("n", "<leader><leader>", ":Telescope find_files<CR>", opts)  -- Quick file finder
 map("n", "<leader>ff", ":Telescope find_files<CR>", opts)
-map("n", "<leader>fg", ":Telescope live_grep<CR>", opts)  -- requires ripgrep
+map("n", "<leader>fg", ":Telescope live_grep<CR>", opts)
 map("n", "<leader>fb", ":Telescope buffers<CR>", opts)
 map("n", "<leader>fh", ":Telescope help_tags<CR>", opts)
+map("n", "<leader>fr", ":Telescope oldfiles<CR>", opts)  -- Recent files
+map("n", "<leader>/", ":Telescope current_buffer_fuzzy_find<CR>", opts)  -- Search in current file
+
+-- Buffer navigation (super fast for 2-3 open files)
+map("n", "<Tab>", ":bnext<CR>", opts)
+map("n", "<S-Tab>", ":bprevious<CR>", opts)
+map("n", "<leader>bd", ":bdelete<CR>", opts)  -- Close buffer
 
 -- Markdown Preview
 map("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", opts)
@@ -208,7 +353,6 @@ map("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", opts)
 map("n", "<leader>mo", ":MindOpenMain<CR>", opts)
 
 -- Markmap (external CLI mindmap in browser)
--- Install once: npm install -g markmap-cli
 map("n", "<leader>mm", ":!markmap %<CR>", { noremap = true, silent = true })
 
 -- ToggleTerm (custom directory-aware versions)
@@ -243,18 +387,14 @@ vim.keymap.set("n", "<leader>p", function()
     print("No file name – save the file first.")
     return
   end
-
   local script = vim.fn.expand("~/.local/bin/nvim2pdf.sh")
   local cmd = string.format("%s %s",
     vim.fn.shellescape(script),
     vim.fn.shellescape(file)
   )
-
   local output = vim.fn.system(cmd)
-  print(output)  -- shows [nvim2pdf] messages in the command area
+  print(output)
 end, opts)
-
-
 
 -- In terminal mode: press Esc to go back to Normal mode
 map("t", "<Esc>", [[<C-\><C-n>]], opts)
@@ -268,3 +408,8 @@ map("n", "<leader>sv", ":source $MYVIMRC<CR>", { noremap = true, silent = true, 
 -- ZEN MODE TOGGLE 
 map("n", "<leader>z", ":ZenMode<CR>", opts)
 
+-- Quick save
+map("n", "<leader>w", ":w<CR>", opts)
+
+-- Quick quit
+map("n", "<leader>q", ":q<CR>", opts)
