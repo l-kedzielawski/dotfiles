@@ -234,7 +234,89 @@ use {
       })
     end,
   })
-  
+ 
+-- Obsidian.nvim - Obsidian vault integration
+  use {
+    "epwalsh/obsidian.nvim",
+    tag = "*",
+    requires = {
+      "nvim-lua/plenary.nvim",
+      "hrsh7th/nvim-cmp",
+      "nvim-telescope/telescope.nvim",
+    },
+    config = function()
+      require("obsidian").setup({
+        workspaces = {
+          {
+            name = "main",
+            path = "~/obsidian",
+          },
+        },
+        
+        -- Completion
+        completion = {
+          nvim_cmp = true,
+          min_chars = 2,
+        },
+        
+        -- Daily notes
+        daily_notes = {
+          folder = "daily",
+          date_format = "%Y-%m-%d",
+        },
+        
+        -- Templates
+        templates = {
+          subdir = "templates",
+          date_format = "%Y-%m-%d",
+          time_format = "%H:%M",
+        },
+        
+        -- Note ID generation
+        note_id_func = function(title)
+          local suffix = ""
+          if title ~= nil then
+            suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+          else
+            for _ = 1, 4 do
+              suffix = suffix .. string.char(math.random(65, 90))
+            end
+          end
+          return tostring(os.time()) .. "-" .. suffix
+        end,
+        
+        -- Wiki link format
+        wiki_link_func = function(opts)
+          if opts.id == nil then
+            return string.format("[[%s]]", opts.label)
+          elseif opts.label ~= opts.id then
+            return string.format("[[%s|%s]]", opts.id, opts.label)
+          else
+            return string.format("[[%s]]", opts.id)
+          end
+        end,
+        
+        -- Mappings
+        mappings = {
+          -- Follow link
+          ["gf"] = {
+            action = function()
+              return require("obsidian").util.gf_passthrough()
+            end,
+            opts = { noremap = false, expr = true, buffer = true },
+          },
+          -- Toggle checkbox
+          ["<leader>ch"] = {
+            action = function()
+              return require("obsidian").util.toggle_checkbox()
+            end,
+            opts = { buffer = true },
+          },
+        },
+      })
+    end,
+  }
+    
   -- Zen writing mode (left + right margins)
   use({
     "folke/zen-mode.nvim",
@@ -301,6 +383,7 @@ cmp.setup({
   }),
   sources = {
     { name = 'nvim_lsp' },
+    { name = 'obsidian'}
     { name = 'luasnip' },
     { name = 'buffer' },
     { name = 'path' },
@@ -408,8 +491,18 @@ map("n", "<leader>sv", ":source $MYVIMRC<CR>", { noremap = true, silent = true, 
 -- ZEN MODE TOGGLE 
 map("n", "<leader>z", ":ZenMode<CR>", opts)
 
--- Quick save
+-- Quick save 
 map("n", "<leader>w", ":w<CR>", opts)
 
 -- Quick quit
 map("n", "<leader>q", ":q<CR>", opts)
+
+-- Obsidian keymaps
+map("n", "<leader>on", ":ObsidianNew<CR>", opts)  -- New note
+map("n", "<leader>os", ":ObsidianSearch<CR>", opts)  -- Search notes
+map("n", "<leader>oq", ":ObsidianQuickSwitch<CR>", opts)  -- Quick switch
+map("n", "<leader>ot", ":ObsidianToday<CR>", opts)  -- Today's daily note
+map("n", "<leader>oy", ":ObsidianYesterday<CR>", opts)  -- Yesterday's note
+map("n", "<leader>ob", ":ObsidianBacklinks<CR>", opts)  -- Show backlinks
+map("n", "<leader>ol", ":ObsidianLinks<CR>", opts)  -- Show all links
+map("n", "<leader>oo", ":ObsidianOpen<CR>", opts)  -- Open in Obsidian app
