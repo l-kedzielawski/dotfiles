@@ -97,3 +97,5 @@ bindkey -M menuselect '^[[Z' reverse-menu-complete
 
 # opencode
 export PATH=/home/gigabear/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
+export PATH="$HOME/.opencode/bin:$PATH"
