@@ -16,6 +16,8 @@ vim.opt.breakindent = true
 vim.opt.breakindentopt = "shift:3" 
 vim.opt.linebreak = true
 
+vim.opt.conceallevel = 0
+
 -- Search
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
@@ -235,88 +237,41 @@ use {
     end,
   })
  
--- Obsidian.nvim - Obsidian vault integration
-  use {
-    "epwalsh/obsidian.nvim",
-    tag = "*",
-    requires = {
-      "nvim-lua/plenary.nvim",
-      "hrsh7th/nvim-cmp",
-      "nvim-telescope/telescope.nvim",
-    },
-    config = function()
-      require("obsidian").setup({
-        workspaces = {
-          {
-            name = "main",
-            path = "~/obsidian",
-          },
+-- Obsidian.nvim - Ultra-minimal config (no templates, no daily notes)
+use {
+  "epwalsh/obsidian.nvim",
+  tag = "*",
+  requires = {
+    "nvim-lua/plenary.nvim",
+  },
+  config = function()
+    require("obsidian").setup({
+      workspaces = {
+        {
+          name = "main",
+          path = "~/obsidian",  -- CHANGE THIS to your actual vault path
         },
-        
-        -- Completion
-        completion = {
-          nvim_cmp = true,
-          min_chars = 2,
-        },
-        
-        -- Daily notes
-        daily_notes = {
-          folder = "daily",
-          date_format = "%Y-%m-%d",
-        },
-        
-        -- Templates
-        templates = {
-          subdir = "templates",
-          date_format = "%Y-%m-%d",
-          time_format = "%H:%M",
-        },
-        
-        -- Note ID generation
-        note_id_func = function(title)
-          local suffix = ""
-          if title ~= nil then
-            suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
-          else
-            for _ = 1, 4 do
-              suffix = suffix .. string.char(math.random(65, 90))
-            end
-          end
-          return tostring(os.time()) .. "-" .. suffix
-        end,
-        
-        -- Wiki link format
-        wiki_link_func = function(opts)
-          if opts.id == nil then
-            return string.format("[[%s]]", opts.label)
-          elseif opts.label ~= opts.id then
-            return string.format("[[%s|%s]]", opts.id, opts.label)
-          else
-            return string.format("[[%s]]", opts.id)
-          end
-        end,
-        
-        -- Mappings
-        mappings = {
-          -- Follow link
-          ["gf"] = {
-            action = function()
-              return require("obsidian").util.gf_passthrough()
-            end,
-            opts = { noremap = false, expr = true, buffer = true },
-          },
-          -- Toggle checkbox
-          ["<leader>ch"] = {
-            action = function()
-              return require("obsidian").util.toggle_checkbox()
-            end,
-            opts = { buffer = true },
-          },
-        },
-      })
-    end,
-  }
-    
+      },
+      
+      -- Completion for [[wiki links]]
+      completion = {
+        nvim_cmp = true,
+        min_chars = 2,
+      },
+      
+      -- Disable UI features to avoid errors
+      ui = {
+        enable = false,  -- This prevents template errors
+      },
+      
+      -- Follow links with gf
+      follow_url_func = function(url)
+        vim.fn.jobstart({"xdg-open", url})  -- Linux
+      end,
+    })
+  end,
+}
+
   -- Zen writing mode (left + right margins)
   use({
     "folke/zen-mode.nvim",
