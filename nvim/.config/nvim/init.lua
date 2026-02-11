@@ -33,6 +33,19 @@ vim.opt.signcolumn = "yes"
 -- Leader Key
 vim.g.mapleader = " "
 
+
+-- =========================
+-- Auto-open PDF in system viewer
+-- =========================
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = "*.pdf",
+  callback = function()
+    local file = vim.fn.expand("<amatch>")
+    vim.fn.jobstart({ "xdg-open", file }, { detach = true })
+    vim.cmd("bd!") -- close buffer in nvim
+  end,
+})
+
 -- =========================
 -- Packer Bootstrap (auto-install if missing)
 -- =========================
@@ -71,15 +84,32 @@ require("packer").startup(function(use)
     end
   }
   
-  -- File Explorer
-  use {
-    "nvim-tree/nvim-tree.lua",
-    requires = { "nvim-tree/nvim-web-devicons" },
-    config = function()
-      require("nvim-tree").setup()
-    end
-  }
-  
+ 
+-- File Explorer
+use {
+  "nvim-tree/nvim-tree.lua",
+  requires = { "nvim-tree/nvim-web-devicons" },
+  config = function()
+    require("nvim-tree").setup({
+      update_focused_file = {
+        enable = true,
+        update_root = true,
+      },
+      view = {
+        width = 35,
+      },
+      renderer = {
+        group_empty = true,
+      },
+      actions = {
+        open_file = {
+          quit_on_open = true,
+        },
+      },
+    })
+  end
+}
+
   -- Telescope (fuzzy finder)
   use "nvim-lua/plenary.nvim"
   use {
