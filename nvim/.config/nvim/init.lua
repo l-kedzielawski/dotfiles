@@ -1,3 +1,5 @@
+
+
 -- =========================
 -- Basic Settings
 -- =========================
@@ -15,7 +17,6 @@ vim.opt.cursorline = true
 vim.opt.breakindent = true
 vim.opt.breakindentopt = "shift:3" 
 vim.opt.linebreak = true
-
 vim.opt.conceallevel = 0
 
 -- Search
@@ -33,7 +34,6 @@ vim.opt.signcolumn = "yes"
 -- Leader Key
 vim.g.mapleader = " "
 
-
 -- =========================
 -- Auto-open PDF in system viewer
 -- =========================
@@ -42,7 +42,7 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
   callback = function()
     local file = vim.fn.expand("<amatch>")
     vim.fn.jobstart({ "xdg-open", file }, { detach = true })
-    vim.cmd("bd!") -- close buffer in nvim
+    vim.cmd("bd!")
   end,
 })
 
@@ -84,32 +84,87 @@ require("packer").startup(function(use)
     end
   }
   
- 
--- File Explorer
-use {
-  "nvim-tree/nvim-tree.lua",
-  requires = { "nvim-tree/nvim-web-devicons" },
-  config = function()
-    require("nvim-tree").setup({
-      update_focused_file = {
-        enable = true,
-        update_root = true,
-      },
-      view = {
-        width = 35,
-      },
-      renderer = {
-        group_empty = true,
-      },
-      actions = {
-        open_file = {
-          quit_on_open = true,
+  -- File Explorer
+  use {
+    "nvim-tree/nvim-tree.lua",
+    requires = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("nvim-tree").setup({
+        update_focused_file = {
+          enable = true,
+          update_root = true,
         },
-      },
-    })
-  end
-}
-
+        view = {
+          width = 35,
+        },
+        renderer = {
+          group_empty = true,
+        },
+        actions = {
+          open_file = {
+            quit_on_open = true,
+          },
+        },
+      })
+    end
+  }
+  
+  -- Oil.nvim - Edit filesystem like a buffer
+  use {
+    "stevearc/oil.nvim",
+    requires = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("oil").setup({
+        default_file_explorer = false,
+        columns = {
+          "icon",
+          "permissions",
+          "size",
+        },
+        buf_options = {
+          buflisted = false,
+          bufhidden = "hide",
+        },
+        win_options = {
+          wrap = false,
+          signcolumn = "no",
+          cursorcolumn = false,
+          foldcolumn = "0",
+          spell = false,
+          list = false,
+          conceallevel = 3,
+          concealcursor = "nvic",
+        },
+        delete_to_trash = true,
+        skip_confirm_for_simple_edits = false,
+        prompt_save_on_select_new_entry = true,
+        view_options = {
+          show_hidden = true,
+          is_hidden_file = function(name, bufnr)
+            return vim.startswith(name, ".")
+          end,
+        },
+        keymaps = {
+          ["g?"] = "actions.show_help",
+          ["<CR>"] = "actions.select",
+          ["<C-v>"] = "actions.select_vsplit",
+          ["<C-s>"] = "actions.select_split",
+          ["<C-t>"] = "actions.select_tab",
+          ["<C-p>"] = "actions.preview",
+          ["<C-c>"] = "actions.close",
+          ["<C-l>"] = "actions.refresh",
+          ["-"] = "actions.parent",
+          ["_"] = "actions.open_cwd",
+          ["`"] = "actions.cd",
+          ["~"] = "actions.tcd",
+          ["gs"] = "actions.change_sort",
+          ["gx"] = "actions.open_external",
+          ["g."] = "actions.toggle_hidden",
+        },
+      })
+    end,
+  }
+  
   -- Telescope (fuzzy finder)
   use "nvim-lua/plenary.nvim"
   use {
@@ -117,7 +172,7 @@ use {
     config = function()
       require("telescope").setup({
         defaults = {
-          file_ignore_patterns = { "node_modules", ".git/" },
+          file_ignore_patterns = { "node_modules", ".git/", ".obsidian/" },
           mappings = {
             i = {
               ["<C-j>"] = require('telescope.actions').move_selection_next,
@@ -142,71 +197,71 @@ use {
     end
   }
   
- -- LSP Configuration (Native Neovim 0.11+ method)
-use {
-  "neovim/nvim-lspconfig",
-  config = function()
-    -- Setup keybindings when LSP attaches
-    vim.api.nvim_create_autocmd('LspAttach', {
-      group = vim.api.nvim_create_augroup('UserLspConfig', {}),
-      callback = function(ev)
-        local opts = { buffer = ev.buf }
-        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-        vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
-        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-        vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
-        vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
-      end,
-    })
+  -- LSP Configuration (Native Neovim 0.11+ method)
+  use {
+    "neovim/nvim-lspconfig",
+    config = function()
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+        callback = function(ev)
+          local opts = { buffer = ev.buf }
+          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+          vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+          vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+          vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+          vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+          vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+          vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+          vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
+          vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
+        end,
+      })
 
-    -- Python LSP
-    vim.lsp.config('pyright', {
-      cmd = { 'pyright-langserver', '--stdio' },
-      filetypes = { 'python' },
-      root_markers = { 'pyproject.toml', 'setup.py', 'requirements.txt', '.git' },
-      settings = {
-        python = {
-          analysis = {
-            autoSearchPaths = true,
-            useLibraryCodeForTypes = true,
+      -- Python LSP
+      vim.lsp.config('pyright', {
+        cmd = { 'pyright-langserver', '--stdio' },
+        filetypes = { 'python' },
+        root_markers = { 'pyproject.toml', 'setup.py', 'requirements.txt', '.git' },
+        settings = {
+          python = {
+            analysis = {
+              autoSearchPaths = true,
+              useLibraryCodeForTypes = true,
+            }
           }
         }
-      }
-    })
-    vim.lsp.enable('pyright')
+      })
+      vim.lsp.enable('pyright')
 
-    -- TypeScript/JavaScript LSP
-    vim.lsp.config('ts_ls', {
-      cmd = { 'typescript-language-server', '--stdio' },
-      filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
-      root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json', '.git' },
-    })
-    vim.lsp.enable('ts_ls')
+      -- TypeScript/JavaScript LSP
+      vim.lsp.config('ts_ls', {
+        cmd = { 'typescript-language-server', '--stdio' },
+        filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+        root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json', '.git' },
+      })
+      vim.lsp.enable('ts_ls')
 
-    -- Lua LSP
-    vim.lsp.config('lua_ls', {
-      cmd = { 'lua-language-server' },
-      filetypes = { 'lua' },
-      root_markers = { '.luarc.json', '.luarc.jsonc', '.git' },
-      settings = {
-        Lua = {
-          diagnostics = {
-            globals = { 'vim' }
-          },
-          workspace = {
-            library = vim.api.nvim_get_runtime_file("", true),
-            checkThirdParty = false,
-          },
+      -- Lua LSP
+      vim.lsp.config('lua_ls', {
+        cmd = { 'lua-language-server' },
+        filetypes = { 'lua' },
+        root_markers = { '.luarc.json', '.luarc.jsonc', '.git' },
+        settings = {
+          Lua = {
+            diagnostics = {
+              globals = { 'vim' }
+            },
+            workspace = {
+              library = vim.api.nvim_get_runtime_file("", true),
+              checkThirdParty = false,
+            },
+          }
         }
-      }
-    })
-    vim.lsp.enable('lua_ls')
-  end
-}
+      })
+      vim.lsp.enable('lua_ls')
+    end
+  }
+  
   -- Autocompletion
   use "hrsh7th/nvim-cmp"
   use "hrsh7th/cmp-nvim-lsp"
@@ -251,58 +306,65 @@ use {
     tag = "*",
     config = function()
       require("toggleterm").setup({
-        size = 12,
-        open_mapping = [[<C-\>]],
-        direction = "horizontal",
-        shade_terminals = true,
-        persist_mode = false,
-        close_on_exit = true,
-        on_open = function(term)
-          local current_dir = vim.fn.expand("%:p:h")
-          if vim.fn.isdirectory(current_dir) == 1 then
-            vim.cmd("tcd " .. current_dir)
+        size = function(term)
+          if term.direction == "horizontal" then
+            return 15
+          elseif term.direction == "vertical" then
+            return vim.o.columns * 0.4
           end
         end,
+        open_mapping = [[<C-\>]],
+        hide_numbers = true,
+        shade_terminals = true,
+        shading_factor = 2,
+        start_in_insert = true,
+        insert_mappings = true,
+        terminal_mappings = true,
+        persist_size = true,
+        persist_mode = true,
+        direction = "horizontal",
+        close_on_exit = true,
+        shell = vim.o.shell,
+        auto_scroll = true,
+        float_opts = {
+          border = "curved",
+          width = math.floor(vim.o.columns * 0.8),
+          height = math.floor(vim.o.lines * 0.8),
+        },
       })
     end,
   })
- 
--- Obsidian.nvim - Ultra-minimal config (no templates, no daily notes)
-use {
-  "epwalsh/obsidian.nvim",
-  tag = "*",
-  requires = {
-    "nvim-lua/plenary.nvim",
-  },
-  config = function()
-    require("obsidian").setup({
-      workspaces = {
-        {
-          name = "main",
-          path = "~/obsidian",  -- CHANGE THIS to your actual vault path
+  
+  -- Obsidian.nvim
+  use {
+    "epwalsh/obsidian.nvim",
+    tag = "*",
+    requires = {
+      "nvim-lua/plenary.nvim",
+    },
+    config = function()
+      require("obsidian").setup({
+        workspaces = {
+          {
+            name = "main",
+            path = "~/obsidian",
+          },
         },
-      },
-      
-      -- Completion for [[wiki links]]
-      completion = {
-        nvim_cmp = true,
-        min_chars = 2,
-      },
-      
-      -- Disable UI features to avoid errors
-      ui = {
-        enable = false,  -- This prevents template errors
-      },
-      
-      -- Follow links with gf
-      follow_url_func = function(url)
-        vim.fn.jobstart({"xdg-open", url})  -- Linux
-      end,
-    })
-  end,
-}
-
-  -- Zen writing mode (left + right margins)
+        completion = {
+          nvim_cmp = true,
+          min_chars = 2,
+        },
+        ui = {
+          enable = false,
+        },
+        follow_url_func = function(url)
+          vim.fn.jobstart({"xdg-open", url})
+        end,
+      })
+    end,
+  }
+  
+  -- Zen writing mode
   use({
     "folke/zen-mode.nvim",
     config = function()
@@ -319,7 +381,7 @@ use {
     end,
   })
   
-  -- Auto-pairs (auto close brackets, quotes, etc.)
+  -- Auto-pairs
   use {
     "windwp/nvim-autopairs",
     config = function()
@@ -327,7 +389,7 @@ use {
     end
   }
   
-  -- Comment plugin (gcc to comment line)
+  -- Comment plugin
   use {
     "numToStr/Comment.nvim",
     config = function()
@@ -381,7 +443,7 @@ cmp.setup({
 local map = vim.keymap.set
 local opts = { noremap = true, silent = true }
 
--- Mouse: whenever you select text with the mouse and release, yank to system clipboard
+-- Mouse: select and yank to clipboard
 map("v", "<LeftRelease>", '"+y', { silent = true })
 
 -- Window navigation
@@ -390,7 +452,7 @@ map('n', '<C-j>', '<C-w>j', opts)
 map('n', '<C-k>', '<C-w>k', opts)
 map('n', '<C-l>', '<C-w>l', opts)
 
--- Resize splits with Alt + Arrow keys
+-- Resize splits
 map('n', '<A-Up>',    ':resize +2<CR>', opts)
 map('n', '<A-Down>',  ':resize -2<CR>', opts)
 map('n', '<A-Left>',  ':vertical resize -2<CR>', opts)
@@ -400,19 +462,23 @@ map('n', '<A-Right>', ':vertical resize +2<CR>', opts)
 map("n", "<leader>e", ":NvimTreeToggle<CR>", opts)
 map("n", "<leader>r", ":NvimTreeFindFile<CR>", opts)
 
--- Telescope - FAST FILE NAVIGATION
-map("n", "<leader><leader>", ":Telescope find_files<CR>", opts)  -- Quick file finder
+-- Oil.nvim - Edit filesystem like text
+map("n", "-", ":Oil<CR>", opts)
+map("n", "<leader>-", ":Oil<CR>", opts)
+
+-- Telescope
+map("n", "<leader><leader>", ":Telescope find_files<CR>", opts)
 map("n", "<leader>ff", ":Telescope find_files<CR>", opts)
 map("n", "<leader>fg", ":Telescope live_grep<CR>", opts)
 map("n", "<leader>fb", ":Telescope buffers<CR>", opts)
 map("n", "<leader>fh", ":Telescope help_tags<CR>", opts)
-map("n", "<leader>fr", ":Telescope oldfiles<CR>", opts)  -- Recent files
-map("n", "<leader>/", ":Telescope current_buffer_fuzzy_find<CR>", opts)  -- Search in current file
+map("n", "<leader>fr", ":Telescope oldfiles<CR>", opts)
+map("n", "<leader>/", ":Telescope current_buffer_fuzzy_find<CR>", opts)
 
--- Buffer navigation (super fast for 2-3 open files)
+-- Buffer navigation
 map("n", "<Tab>", ":bnext<CR>", opts)
 map("n", "<S-Tab>", ":bprevious<CR>", opts)
-map("n", "<leader>bd", ":bdelete<CR>", opts)  -- Close buffer
+map("n", "<leader>bd", ":bdelete<CR>", opts)
 
 -- Markdown Preview
 map("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", opts)
@@ -420,10 +486,48 @@ map("n", "<leader>mp", ":MarkdownPreviewToggle<CR>", opts)
 -- Mind.nvim
 map("n", "<leader>mo", ":MindOpenMain<CR>", opts)
 
--- Markmap (external CLI mindmap in browser)
+-- Markmap
 map("n", "<leader>mm", ":!markmap %<CR>", { noremap = true, silent = true })
 
--- ToggleTerm (custom directory-aware versions)
+-- Terminal keymaps
+map("n", "<leader>th", function()
+  local dir = vim.fn.expand("%:p:h")
+  local Terminal = require("toggleterm.terminal").Terminal
+  local term = Terminal:new({
+    direction = "horizontal",
+    dir = dir,
+    close_on_exit = true,
+    shade_terminals = true,
+  })
+  term:toggle()
+end, opts)
+
+map("n", "<leader>tv", function()
+  local dir = vim.fn.expand("%:p:h")
+  local Terminal = require("toggleterm.terminal").Terminal
+  local vert_term = Terminal:new({
+    direction = "vertical",
+    dir = dir,
+    close_on_exit = true,
+    shade_terminals = true,
+    size = vim.o.columns * 0.4,
+  })
+  vert_term:toggle()
+end, opts)
+
+map("n", "<leader>tf", function()
+  local dir = vim.fn.expand("%:p:h")
+  local Terminal = require("toggleterm.terminal").Terminal
+  local float_term = Terminal:new({
+    direction = "float",
+    dir = dir,
+    close_on_exit = true,
+    shade_terminals = true,
+  })
+  float_term:toggle()
+end, opts)
+
+-- Keep old terminal keybinds for compatibility
 map("n", "<leader>t", function()
   local dir = vim.fn.expand("%:p:h")
   local Terminal = require("toggleterm.terminal").Terminal
@@ -448,7 +552,14 @@ map("n", "<leader>T", function()
   float_term:toggle()
 end, opts)
 
--- Print to PDF using nvim2pdf.sh
+-- Terminal mode navigation
+map("t", "<Esc>", [[<C-\><C-n>]], opts)
+map("t", "<C-h>", [[<C-\><C-n><C-w>h]], opts)
+map("t", "<C-j>", [[<C-\><C-n><C-w>j]], opts)
+map("t", "<C-k>", [[<C-\><C-n><C-w>k]], opts)
+map("t", "<C-l>", [[<C-\><C-n><C-w>l]], opts)
+
+-- Print to PDF
 vim.keymap.set("n", "<leader>p", function()
   local file = vim.fn.expand("%:p")
   if file == "" then
@@ -464,30 +575,75 @@ vim.keymap.set("n", "<leader>p", function()
   print(output)
 end, opts)
 
--- In terminal mode: press Esc to go back to Normal mode
-map("t", "<Esc>", [[<C-\><C-n>]], opts)
-
--- Equalize all window sizes quickly
+-- Window management
 map("n", "<leader>=", "<C-w>=", opts)
 
--- Reload config quickly
-map("n", "<leader>sv", ":source $MYVIMRC<CR>", { noremap = true, silent = true, desc = "Reload config" })
+-- Config reload
+map("n", "<leader>sv", ":source $MYVIMRC<CR>", { noremap = true, silent = true })
 
--- ZEN MODE TOGGLE 
+-- Zen mode
 map("n", "<leader>z", ":ZenMode<CR>", opts)
 
--- Quick save 
+-- Quick save/quit
 map("n", "<leader>w", ":w<CR>", opts)
-
--- Quick quit
 map("n", "<leader>q", ":q<CR>", opts)
 
 -- Obsidian keymaps
-map("n", "<leader>on", ":ObsidianNew<CR>", opts)  -- New note
-map("n", "<leader>os", ":ObsidianSearch<CR>", opts)  -- Search notes
-map("n", "<leader>oq", ":ObsidianQuickSwitch<CR>", opts)  -- Quick switch
-map("n", "<leader>ot", ":ObsidianToday<CR>", opts)  -- Today's daily note
-map("n", "<leader>oy", ":ObsidianYesterday<CR>", opts)  -- Yesterday's note
-map("n", "<leader>ob", ":ObsidianBacklinks<CR>", opts)  -- Show backlinks
-map("n", "<leader>ol", ":ObsidianLinks<CR>", opts)  -- Show all links
-map("n", "<leader>oo", ":ObsidianOpen<CR>", opts)  -- Open in Obsidian app
+map("n", "<leader>on", ":ObsidianNew<CR>", opts)
+map("n", "<leader>os", ":ObsidianSearch<CR>", opts)
+map("n", "<leader>oq", ":ObsidianQuickSwitch<CR>", opts)
+map("n", "<leader>ot", ":ObsidianToday<CR>", opts)
+map("n", "<leader>oy", ":ObsidianYesterday<CR>", opts)
+map("n", "<leader>ob", ":ObsidianBacklinks<CR>", opts)
+map("n", "<leader>ol", ":ObsidianLinks<CR>", opts)
+map("n", "<leader>oo", ":ObsidianOpen<CR>", opts)
+
+-- Toggle conceallevel for markdown
+map("n", "<leader>oc", function()
+  if vim.o.conceallevel > 0 then
+    vim.o.conceallevel = 0
+    print("Raw markdown")
+  else
+    vim.o.conceallevel = 2
+    print("Pretty markdown")
+  end
+end, opts)
+
+-- Enhanced clipboard operations
+map("n", "<leader>yf", function()
+  local path = vim.fn.expand("%:p")
+  vim.fn.setreg("+", path)
+  vim.fn.setreg("*", path)
+  print("📋 Copied path: " .. path)
+end, opts)
+
+map("n", "<leader>yn", function()
+  local name = vim.fn.expand("%:t")
+  vim.fn.setreg("+", name)
+  vim.fn.setreg("*", name)
+  print("📋 Copied name: " .. name)
+end, opts)
+
+map("n", "<leader>yk", function()
+  local filename = vim.fn.expand("%:t:r")
+  local link = "[[" .. filename .. "]]"
+  vim.fn.setreg("+", link)
+  vim.fn.setreg("*", link)
+  print("📋 Copied link: " .. link)
+end, opts)
+
+map("n", "<leader>ya", function()
+  vim.cmd("%y+")
+  print("📋 Copied entire file")
+end, opts)
+
+-- File operations
+map("n", "<leader>fx", function()
+  local file = vim.fn.expand("%:p")
+  if file == "" then
+    print("No file to open")
+    return
+  end
+  vim.fn.jobstart({"xdg-open", file}, {detach = true})
+  print("Opening: " .. vim.fn.expand("%:t"))
+end, opts)
